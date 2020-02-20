@@ -4,12 +4,26 @@ namespace dexen\Cheap;
 
 class Repository
 {
-	protected $dir;
+	protected $Config;
 
-	function __construct(string $dir)
+	function __construct(string $work_tree = null, string $git_dir = null)
 	{
-		$this->dir = $dir;
-		if (!is_dir($this->dir))
-			throw new Exception(sprintf('repository pathname not a directory: "%s"', $this->dir));
+		$this->Config = new Config($work_tree, $git_dir);
+	}
+
+	function Config() : Config
+	{
+		return $this->Config;
+	}
+
+	static
+	function checkValidRepository(string $pathname)
+	{
+		if (!is_dir($pathname))
+			throw new Exception(sprintf('not a git repository: not a directory: "%s"', $pathname));
+		if (!file_exists($pathname .'/HEAD'))
+			throw new Exception(sprintf('not a git repository: missing "%s"', 'HEAD'));
+		if (!is_dir($pathname .'/objects'))
+			throw new Exception(sprintf('not a git repository: missing "%s"', 'objects'));
 	}
 }
