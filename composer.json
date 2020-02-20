@@ -1,0 +1,22 @@
+{
+	"name": "dexen/cheap",
+	"description": "Git implementation in PHP 7.4+",
+	"authors": [
+		{
+			"name": "dexen deVries",
+			"email": "dexen.devries@gmail.com"
+		}
+	],
+	"keywords": [
+		"git",
+		"php"
+	],
+	"homepage": "https://github.com/dexen/cheap",
+	"type": "library",
+	"autoload": {
+		"psr-4": {"dexen\\Cheap\\": "src/"}
+	},
+	"require": {
+		"php": ">=7.4"
+	}
+}
