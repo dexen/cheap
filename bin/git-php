@@ -1,0 +1,23 @@
+#!/usr/bin/env php
+<?php
+
+use dexen\Cheap\Repository;
+use dexen\Cheap\Textual;
+
+require dirname(__DIR__) .'/vendor/autoload.php';
+
+try {
+	$T = new Textual(Repository::fromCwd());
+	switch ($argv[1] ?? null) {
+	case 'branch':
+		echo $T->branch();
+		die();
+	case '':
+		puts('Usage: ' .$argv[0] .' <a git command> [<args>]' .PHP_EOL);
+		die(0);
+	default:
+		printf('Unsupported command: "%s" ', $argv[1]);
+		die(2); } }
+catch (Throwable $E) {
+	echo 'Error: ' .$E->getMessage() .PHP_EOL;
+	die(2); }

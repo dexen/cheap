@@ -1,0 +1,7 @@
+#!/bin/sh
+
+php="php"
+
+main_script="$(dirname $(realpath $0))/git-php"
+
+exec "$php" $main_script "$@"

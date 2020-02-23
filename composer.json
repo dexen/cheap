@@ -19,5 +19,9 @@
 	},
 	"require": {
 		"php": ">=7.4"
-	}
+	},
+	"bin": [
+		"bin/cheap",
+		"bin/git-php"
+	]
 }
