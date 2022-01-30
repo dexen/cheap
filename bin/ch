@@ -16,7 +16,7 @@ if ($argv[1] === 'show') {
 			if (empty($hash)) {
 				printf('Could not read hash of ref "%s"' ."\n", $ref);
 				die(1); }
-				pretty_print_blob(repo_blob_by_hash($hash));
+				pretty_print_blob(repo_object_content_by_hash($hash));
 				die(0); }
 		else {
 			printf('Unsupported HEAD ref: "%s"' ."\n", $v);
