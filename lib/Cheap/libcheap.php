@@ -31,7 +31,7 @@ function repo_object_content_by_hash($hash) : string
 	else if ($pn = repo_object_in_pack_by_hash($hash))
 		return repo_object_from_pack($hash, $pn)[0];
 	else
-		die('object not found: ' .$hash);
+		throw new \Exception('object not found: ' .$hash);
 }
 
 function pretty_print_blob(string $blob)
