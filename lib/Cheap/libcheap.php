@@ -24,6 +24,25 @@ function repo_object_in_loose_by_hash(string $hash) : ?string
 		return null;
 }
 
+function repo_pn_absolute(string $rpn) : string
+{
+	return '.git/' .$rpn;
+}
+
+function repo_pack_index_list() : array
+{
+	return glob(repo_pn_absolute('objects/pack/*.idx'), GLOB_NOSORT | GLOB_ERR);
+}
+
+function repo_object_in_pack_by_hash(string $hash) : ?string
+{
+	$pn = null;
+	foreach (repo_pack_index_list() as $pn) {
+		td(repo_pack_index_has_hash_p($pn, $hash));
+	}
+	return $pn;
+}
+
 function repo_object_content_by_hash($hash) : string
 {
 	if ($pn = repo_object_in_loose_by_hash($hash))
