@@ -5,7 +5,8 @@ function td(...$a) { foreach ($a as $v) var_export($v); echo "\n--\ntd()\n"; die
 
 require __DIR__ .'/' .'../lib/Cheap/libcheap.php';
 
-if ($argv[1] === 'show') {
+switch ($argv[1]??null) {
+case 'show':
 	if ($argv[2] === 'HEAD') {
 		$v = file_get_contents('.git/HEAD');
 		$matches = [];
@@ -23,7 +24,10 @@ if ($argv[1] === 'show') {
 			die(1); } }
 	else {
 		printf('Unsupported tree-ish: "%s"' ."\n", $argv[2]);
-		die(1); } }
-else {
+		die(1); }
+case null:
+	echo "USAGE: cheap show HEAD\n";
+	die(0);
+default:
 	echo "USAGE: cheap show HEAD\n";
 	die(1); }
