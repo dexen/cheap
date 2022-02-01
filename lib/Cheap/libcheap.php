@@ -1,5 +1,7 @@
 <?php
 
+require __DIR__ .'/' .'libcheap_pack.php';
+
 function repo_hash_to_object_pn(string $hash) : string
 {
 	return 'objects/' .substr($hash, 0, 2) .'/' .substr($hash, 2);
@@ -38,7 +40,7 @@ function repo_object_in_pack_by_hash(string $hash) : ?string
 {
 	$pn = null;
 	foreach (repo_pack_index_list() as $pn) {
-		td(repo_pack_index_has_hash_p($pn, $hash));
+		td(repo_pack_index_hash_lookup($pn, $hash));
 	}
 	return $pn;
 }
