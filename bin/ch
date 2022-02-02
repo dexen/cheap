@@ -46,8 +46,8 @@ case 'show':
 			printf('Unsupported HEAD ref: "%s"' ."\n", $v);
 			die(1); } }
 	else {
-		printf('Unsupported tree-ish: "%s"' ."\n", $argv[2]);
-		die(1); }
+		pretty_print_blob(repo_object_content_by_hash($argv[2]));
+		die(0); }
 case null:
 	echo "USAGE: cheap show HEAD\n";
 	die(0);
