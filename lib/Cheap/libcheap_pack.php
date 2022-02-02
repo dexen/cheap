@@ -61,14 +61,14 @@ function repo_pack_index_hash_lookup(string $pn, string $hash) : ?array
 		throw new \Exception('malformed pack index: fanout underflow');
 
 	$count_hash_table = $count_objects;
-	$len_hash_table = $count_hash_table*strlen($bhash);
+	$len_hash_table = $count_hash_table*repo_bhash_length();
 	$search_start = $offset;
 	$search_end = $search_start +$len_hash_table;
 	$offset += $len_hash_table;
 
 	$match_num = null;
 	for ($n = 0; $n < $count_hash_table; ++$n)
-		if (substr($content, $search_start+$n*strlen($bhash), strlen($bhash)) === $bhash)
+		if (substr($content, $search_start+$n*repo_bhash_length(), repo_bhash_length()) === $bhash)
 			$match_num = $n;
 	if ($match_num === null)
 		return null;

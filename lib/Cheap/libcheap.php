@@ -7,6 +7,10 @@ function repo_hash_to_object_pn(string $hash) : string
 	return 'objects/' .substr($hash, 0, 2) .'/' .substr($hash, 2);
 }
 
+function repo_bhash_length() { return 20; }
+
+function repo_hash_length() { return 40; }
+
 function repo_blob_from_loose(string $hash, string $pn) : ?array
 {
 	$v = file_get_contents('.git/' .$pn);
