@@ -20,6 +20,19 @@ function repo_blob_from_loose(string $hash, string $pn) : ?array
 	return [ zlib_decode($v) ];
 }
 
+function repo_loose_hash_search(string $short_hash) : array
+{
+	if (strlen($short_hash) < 2)
+		throw new \Exception('unsupported: hash fragment too short');
+	$pat = '.git/' .'objects/' .substr($short_hash, 0, 2) .'/' .substr($short_hash, 2) .'*';
+	$a = glob($pat, GLOB_MARK | GLOB_NOSORT | GLOB_NOESCAPE | GLOB_ERR);
+	if ($a === false)
+		return [];
+	return array_map(
+		fn($str) => substr(str_replace('/', '', $str), -repo_hash_length()),
+		$a );
+}
+
 	# pathname
 function repo_object_in_loose_by_hash(string $hash) : ?string
 {
@@ -62,4 +75,15 @@ function repo_object_content_by_hash($hash) : string
 function pretty_print_blob(string $blob)
 {
 	echo $blob;
+}
+
+function repo_object_name_resolution_short_hash(string $short_hash) : array
+{
+# FIXME search also in loose objects
+	$ret = repo_loose_hash_search($short_hash);
+	foreach (repo_pack_index_list() as $pn)
+		$ret = array_merge(
+			$ret,
+			repo_pack_index_hash_search($pn, $short_hash) );
+	return $ret;
 }

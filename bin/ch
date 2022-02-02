@@ -6,6 +6,29 @@ function td(...$a) { foreach ($a as $v) var_export($v); echo "\n--\ntd()\n"; die
 require __DIR__ .'/' .'../lib/Cheap/libcheap.php';
 
 switch ($argv[1]??null) {
+case 'rev-parse':
+	if ($argv[2] === 'HEAD') {
+		$v = file_get_contents('.git/HEAD');
+		$matches = [];
+		if (preg_match('#^ref: (refs/heads/([^\\s]+))\\s*#', $v, $matches)) {
+			$ref = $matches[1];
+				# FIXME: prevent dir traversal outside
+			$hash = rtrim(file_get_contents('.git/' .$ref));
+			echo $hash, "\n";
+			return 0; } }
+	else {
+		$short_hash = $argv[2];
+		$a = repo_object_name_resolution_short_hash($short_hash);
+		switch (count($a)) {
+		case 1:
+			echo $a[0], "\n";
+			return 0;
+		case 0:
+			printf("Revision %s not found in repository\n", $short_hash);
+			return 1;
+		default:
+			printf("Ambiguous revision %s\n", $short_hash);
+			return 1; } }
 case 'show':
 	if ($argv[2] === 'HEAD') {
 		$v = file_get_contents('.git/HEAD');

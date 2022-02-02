@@ -34,6 +34,51 @@ function pack_pathname_from_index_pathname(string $pn) : string
 		return $a['dirname'] .'/' .$a['filename'] .'.pack';
 }
 
+	/* array of hashes */
+function repo_pack_index_hash_search(string $pn, string $short_hash) : array
+{
+	$ret = [];
+
+	$content = file_get_contents($pn);
+	if (!pack_string_is_index_p($content))
+		throw new \Exception('file format error: not a pack index');
+	if (!pack_string_is_index_v2_p($content))
+		throw new \Exception('unsupported file format: not a v2 pack index');
+	if (!pack_string_is_index_v2_checksum_consistent_p($content))
+		throw new \Exception('file formart error: checksum does not match');
+
+	$len_header = 2*4;
+	$offset = $len_header;
+	$fanout = unpack('N256', $content, $offset);
+	if (count($fanout) !== 256)
+		throw new \Exception('malformed pack index: wrong fanout table size');
+	if (strlen($short_hash) < 2)
+		throw new \Exception('unsupported: hash fragment too short');
+	$v = hexdec(substr($short_hash, 0, 2));
+	$len_fanout_table = count($fanout)*4;
+	$offset += $len_fanout_table;
+
+		# note: the unpack() returns base-1 array
+	$count_objects = $fanout[count($fanout)];
+	if ($count_objects <= 0)
+		throw new \Exception('malformed pack index: fanout underflow');
+
+	$count_hash_table = $count_objects;
+	$len_hash_table = $count_hash_table*repo_bhash_length();
+	$search_start = $offset;
+	$search_end = $search_start +$len_hash_table;
+	$offset += $len_hash_table;
+
+	for ($n = 0; $n < $count_hash_table; ++$n) {
+		$bcandidate = substr($content, $search_start+$n*repo_bhash_length(), repo_bhash_length());
+		$candidate = bin2hex($bcandidate);
+		if (strncmp($candidate, $short_hash, strlen($short_hash)) === 0)
+			$ret[] = $candidate; }
+
+	return $ret;
+}
+
+	/* a record */
 function repo_pack_index_hash_lookup(string $pn, string $hash) : ?array
 {
 	$bhash = hex2bin($hash);
