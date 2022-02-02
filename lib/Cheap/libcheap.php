@@ -53,21 +53,21 @@ function repo_pack_index_list() : array
 	return glob(repo_pn_absolute('objects/pack/*.idx'), GLOB_NOSORT | GLOB_ERR);
 }
 
-function repo_object_in_pack_by_hash(string $hash) : ?string
+function repo_object_in_pack_by_hash(string $hash) : ?array
 {
 	$pn = null;
-	foreach (repo_pack_index_list() as $pn) {
-		td(repo_pack_index_hash_lookup($pn, $hash));
-	}
-	return $pn;
+	foreach (repo_pack_index_list() as $pn)
+		if ($rcd = repo_pack_index_hash_lookup($pn, $hash))
+			return $rcd;
+	return null;
 }
 
 function repo_object_content_by_hash($hash) : string
 {
 	if ($pn = repo_object_in_loose_by_hash($hash))
 		return repo_blob_from_loose($hash, $pn)[0];
-	else if ($pn = repo_object_in_pack_by_hash($hash))
-		return repo_object_from_pack($hash, $pn)[0];
+	else if ($rcd = repo_object_in_pack_by_hash($hash))
+		return repo_pack_object_read($rcd[1], $rcd[2])[1];
 	else
 		throw new \Exception('object not found: ' .$hash);
 }

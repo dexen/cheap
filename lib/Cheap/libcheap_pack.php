@@ -135,3 +135,36 @@ function repo_pack_index_hash_lookup(string $pn, string $hash) : ?array
 
 	return [ $pn, pack_pathname_from_index_pathname($pn), $v ];
 }
+
+function repo_pack_object_read(string $pn, int $object_offset) : array
+{
+	$offset = $object_offset;
+	$content = file_get_contents($pn);
+	$vv = unpack('C', $content, $offset)[1];
+	$vvh = dechex($vv);
+	$v = $vv & 0x7f;
+	$type = $v >> 4;
+	switch ($type) {
+	case 1:
+	case 2:
+	case 3:
+	case 4:
+		break;
+	case 0:
+		throw new \Exception('malformed: invalid type ' .$type);
+	case 5:
+		throw new \Exception('unsupported: type ' .$type);
+	case 6:
+	case 7:
+		throw new \Exception('FIXME: not implemented: type ' .$type); }
+	$len = $v & 0x0f;
+	$offset += 1;
+	$shift = 4;
+	while ($vv >= 128) {
+		$vv = unpack('C', $content, $offset)[1];
+		$v = $vv & 0x7f;
+		$offset += 1;
+		$len += $v << $shift;
+		$shift += 7; }
+	return [ $type, zlib_decode(substr($content, $offset, $len)) ];
+}
