@@ -143,20 +143,29 @@ function repo_pack_object_read(string $pn, int $object_offset) : array
 	$vv = unpack('C', $content, $offset)[1];
 	$vvh = dechex($vv);
 	$v = $vv & 0x7f;
-	$type = $v >> 4;
-	switch ($type) {
+	$vtype = $v >> 4;
+	switch ($vtype) {
 	case 1:
+		$type = 'commit';
+		break;
 	case 2:
+		$type = 'tree';
+		break;
 	case 3:
+		$type = 'blob';
 	case 4:
+		$type = 'tag';
 		break;
 	case 0:
-		throw new \Exception('malformed: invalid type ' .$type);
+		throw new \Exception('malformed: invalid type ' .$vtype);
 	case 5:
-		throw new \Exception('unsupported: type ' .$type);
+		throw new \Exception('unsupported: type ' .$vtype);
 	case 6:
+		$type = 'ofs_delta';
+		throw new \Exception('FIXME: not implemented: type ' .$vtype);
 	case 7:
-		throw new \Exception('FIXME: not implemented: type ' .$type); }
+		$type = 'ref_delta';
+		throw new \Exception('FIXME: not implemented: type ' .$vtype); }
 	$len = $v & 0x0f;
 	$offset += 1;
 	$shift = 4;
