@@ -11,13 +11,25 @@ function repo_bhash_length() { return 20; }
 
 function repo_hash_length() { return 40; }
 
+	/* [ type, content ] */
 function repo_blob_from_loose(string $hash, string $pn) : ?array
 {
 	$v = file_get_contents('.git/' .$pn);
 	if ($v === false) {
 		printf('could not read object' ."\n");
 		die(1); }
-	return [ zlib_decode($v) ];
+	$vv = zlib_decode($v);
+	if (sha1($vv) !== $hash)
+		throw new \Exception('malformed object: hash does not match');
+	[ $header, $content ] = explode("\x00", $vv, 2);
+	[ $type, $len ] = explode(' ', $header);
+	$len = (int)$len;
+	if ($len < 0)
+		throw new \Exception('malformed object: negative length');
+	if (strlen($content) !== $len)
+		throw new \Exception('malformed object: len <> len');
+	else
+		return [ $type, $content ];
 }
 
 function repo_loose_hash_search(string $short_hash) : array
@@ -62,19 +74,20 @@ function repo_object_in_pack_by_hash(string $hash) : ?array
 	return null;
 }
 
-function repo_object_content_by_hash($hash) : string
+	/* [ type, content ] */
+function repo_object_content_by_hash($hash) : array
 {
 	if ($pn = repo_object_in_loose_by_hash($hash))
-		return repo_blob_from_loose($hash, $pn)[0];
+		return repo_blob_from_loose($hash, $pn);
 	else if ($rcd = repo_object_in_pack_by_hash($hash))
-		return repo_pack_object_read($rcd[1], $rcd[2])[1];
+		return repo_pack_object_read($rcd[1], $rcd[2]);
 	else
 		throw new \Exception('object not found: ' .$hash);
 }
 
-function pretty_print_blob(string $blob)
+function pretty_print_blob(array $rcd)
 {
-	echo $blob;
+	echo $rcd[1];
 }
 
 function repo_object_name_resolution_short_hash(string $short_hash) : array
