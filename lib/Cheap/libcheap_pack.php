@@ -153,6 +153,101 @@ function repo_pack_size_parse(string $content, int $offset)
 	return [ $offset, $len ];
 }
 
+	# big-endian "offset encoding", 7 bit value, upper bit "value continues"
+	# seems to be undocumented in https://git-scm.com/docs/pack-format
+	# idea taken from write_no_reuse_object() in git/builtin/pack-objects.c
+#private
+function pack_offset_parse(string $content, int $offset)
+{
+	$len = 0;
+	$shift = 7;
+	do {
+		$len = $len << $shift;
+		$vv = unpack('C', $content, $offset)[1];
+		$add = ($vv >= 128);	# couldn't find this part in the docs
+		$v = ($vv & 0x7f) + $add;
+		$len += $v;
+		++$offset;
+	} while ($vv >= 128);
+	return [ $offset, $len ];
+}
+
+#private
+function pack_object_ofs_delta_instructions_decode(string $instructions, string $base_content) : array
+{
+	$ii = unpack('C', $instructions)[1];
+	if ($ii === 0)
+		throw new \Exception('unsupported: reserved instruction');
+		# add new data
+	if ($ii < 128) {
+		$size = $ii;
+		$fragment = substr($instructions, 1, $size);
+		$remainder_instructions = substr($instructions, $size + 1); }
+	else {
+		$fields = $ii & 0x7f;
+		$bs = 0;
+		$offset = $size = 0;
+		$a = unpack('C*', substr($instructions, 1, 7));
+		if ($fields & (1<<0)) {
+			++$bs;
+			$offset += array_shift($a) << 0; }
+		if ($fields & (1<<1)) {
+			++$bs;
+			$offset += array_shift($a) << 8; }
+		if ($fields & (1<<2)) {
+			++$bs;
+			$offset += array_shift($a) << 16; }
+		if ($fields & (1<<3)) {
+			++$bs;
+			$offset += array_shift($a) << 24; }
+		if ($fields & (1<<4)) {
+			++$bs;
+			$size += array_shift($a) << 0; }
+		if ($fields & (1<<5)) {
+			++$bs;
+			$size += array_shift($a) << 8; }
+		if ($fields & (1<<6)) {
+			++$bs;
+			$size += array_shift($a) << 16; }
+		$remainder_instructions = substr($instructions, $bs + 1);
+		$fragment = substr($base_content, $offset, $size); }
+	return [ $remainder_instructions, $fragment ];
+}
+
+function pack_object_ofs_delta_decode(string $pn, string $content, int $object_offset, int $data_offset, int $decompressed_size)
+{
+	$decoded = -1;
+	$a = [];
+	$parent_type = -1;
+	$base_object_size = -1;
+	$decoded_size = -1;
+
+	[ $data_offset, $base_object_relative_offset ] = pack_offset_parse($content, $data_offset);
+	$base_object_offset = $object_offset - $base_object_relative_offset;
+
+	$ddata = zlib_decode(substr($content, $data_offset));
+	if (strlen($ddata) !== $decompressed_size)
+		throw new \Exception('encoded data length mismatch');
+
+	$ddata_offset = 0;
+	[ $ddata_offset, $base_object_size ] = repo_pack_size_parse($ddata, $ddata_offset);
+	[ $ddata_offset, $decoded_size ] = repo_pack_size_parse($ddata, $ddata_offset);
+
+	$instructions = substr($ddata, $ddata_offset);
+
+	[ $parent_type, $parent_content ] = repo_pack_object_read($pn, $base_object_offset);
+
+	while ($instructions !== '')
+		[ $instructions, $a[] ] = pack_object_ofs_delta_instructions_decode($instructions, $parent_content);
+
+	$decoded = implode($a);
+
+	if (strlen($decoded) !== $decoded_size)
+		throw new \Exception(sprintf('size mismatch (%d, %d)', strlen($decoded), $decoded_size));
+
+	return [ $parent_type, $decoded ];
+}
+
 function repo_pack_object_read(string $pn, int $object_offset) : array
 {
 	$offset = $object_offset;
@@ -187,7 +282,8 @@ function repo_pack_object_read(string $pn, int $object_offset) : array
 
 	switch ($type) {
 	case 'ofs_delta':
-		throw new \Exception('unsupported: type ' .$type);
+		[ $type, $decoded_content ] = pack_object_ofs_delta_decode($pn, $content, $object_offset, $offset, $decompressed_size);
+		break;
 	case 'ref_delta':
 		throw new \Exception('unsupported: type ' .$type);
 	case 'commit':
