@@ -1,5 +1,7 @@
 <?php
 
+namespace dexen\Cheap;
+
 require __DIR__ .'/' .'libcheap_pack.php';
 
 function repo_hash_to_object_pn(string $hash) : string

@@ -1,5 +1,7 @@
 <?php
 
+namespace dexen\Cheap;
+
 # broadly based off of https://git-scm.com/docs/pack-format
 
 function pack_string_is_index_v2_p(string $content) : bool

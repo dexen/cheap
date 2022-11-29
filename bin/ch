@@ -3,6 +3,8 @@
 
 function td(...$a) { foreach ($a as $v) var_export($v); echo "\n--\ntd()\n"; die(2); }
 
+namespace dexen\Cheap;
+
 require __DIR__ .'/' .'../lib/Cheap/libcheap.php';
 
 switch ($argv[1]??null) {
