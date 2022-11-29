@@ -285,7 +285,7 @@ function repo_pack_object_read(string $pn, int $object_offset) : array
 		[ $type, $decoded_content ] = pack_object_ofs_delta_decode($pn, $content, $object_offset, $offset, $decompressed_size);
 		break;
 	case 'ref_delta':
-		throw new \Exception('unsupported: type ' .$type);
+		throw new \Exception('FIXME unsupported: type ' .$type);
 	case 'commit':
 	case 'tree':
 	case 'blob':
