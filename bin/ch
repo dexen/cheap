@@ -10,7 +10,9 @@ require __DIR__ .'/' .'../lib/Cheap/libcheap.php';
 
 switch ($argv[1]??null) {
 case 'rev-parse':
-	if ($argv[2] === 'HEAD') {
+	if (!array_key_exists(2, $argv))
+		exit(0);
+	else if ($argv[2] === 'HEAD') {
 		$v = file_get_contents('.git/HEAD');
 		$matches = [];
 		if (preg_match('#^ref: (refs/heads/([^\\s]+))\\s*#', $v, $matches)) {
