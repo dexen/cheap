@@ -2,6 +2,7 @@
 <?php
 
 function td(...$a) { foreach ($a as $v) var_export($v); echo "\n--\ntd()\n"; die(2); }
+function tp(...$a) { foreach ($a as $v) var_export($v); echo "\n--\ntp()\n"; return $a[0]; }
 
 namespace dexen\Cheap;
 
