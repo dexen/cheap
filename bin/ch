@@ -8,6 +8,13 @@ namespace dexen\Cheap;
 
 require __DIR__ .'/' .'../lib/Cheap/libcheap.php';
 
+$show_usage = function()
+{
+	echo "USAGE:\n";
+	echo "	ch show HEAD\n";
+	echo "	ch rev-parse <args>\n";
+};
+
 switch ($argv[1]??null) {
 case 'rev-parse':
 	if (!array_key_exists(2, $argv))
@@ -54,8 +61,8 @@ case 'show':
 		pretty_print_blob(repo_object_content_by_hash($argv[2]));
 		die(0); }
 case null:
-	echo "USAGE: cheap show HEAD\n";
+	$show_usage();
 	die(0);
 default:
-	echo "USAGE: cheap show HEAD\n";
+	$show_usage();
 	die(1); }
