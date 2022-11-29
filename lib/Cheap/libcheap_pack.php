@@ -155,6 +155,7 @@ function repo_pack_object_read(string $pn, int $object_offset) : array
 		break;
 	case 3:
 		$type = 'blob';
+		break;
 	case 4:
 		$type = 'tag';
 		break;
