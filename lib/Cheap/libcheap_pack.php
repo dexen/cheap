@@ -138,14 +138,29 @@ function repo_pack_index_hash_lookup(string $pn, string $hash) : ?array
 	return [ $pn, pack_pathname_from_index_pathname($pn), $v ];
 }
 
+	# little-endian "size encoding"
+function repo_pack_size_parse(string $content, int $offset)
+{
+	$len = 0;
+	$shift = 0;
+	do {
+		$vv = unpack('C', $content, $offset)[1];
+		$v = $vv & 0x7f;
+		$offset += 1;
+		$len += $v << $shift;
+		$shift += 7;
+	} while ($vv >= 128);
+	return [ $offset, $len ];
+}
+
 function repo_pack_object_read(string $pn, int $object_offset) : array
 {
 	$offset = $object_offset;
 	$content = file_get_contents($pn);
-	$vv = unpack('C', $content, $offset)[1];
-	$vvh = dechex($vv);
-	$v = $vv & 0x7f;
-	$vtype = $v >> 4;
+	[ $offset, $size_and_type ] = repo_pack_size_parse($content, $offset);
+	$vtype = ($size_and_type >> 4) & 0x07;
+	$decompressed_size = (($size_and_type >> 7) << 4) + ($size_and_type & 0x0f);
+
 	switch ($vtype) {
 	case 1:
 		$type = 'commit';
@@ -165,18 +180,23 @@ function repo_pack_object_read(string $pn, int $object_offset) : array
 		throw new \Exception('unsupported: type ' .$vtype);
 	case 6:
 		$type = 'ofs_delta';
-		throw new \Exception('FIXME: not implemented: type ' .$vtype);
+		break;
 	case 7:
 		$type = 'ref_delta';
-		throw new \Exception('FIXME: not implemented: type ' .$vtype); }
-	$len = $v & 0x0f;
-	$offset += 1;
-	$shift = 4;
-	while ($vv >= 128) {
-		$vv = unpack('C', $content, $offset)[1];
-		$v = $vv & 0x7f;
-		$offset += 1;
-		$len += $v << $shift;
-		$shift += 7; }
-	return [ $type, zlib_decode(substr($content, $offset, $len)) ];
+		break; }
+
+	switch ($type) {
+	case 'ofs_delta':
+		throw new \Exception('unsupported: type ' .$type);
+	case 'ref_delta':
+		throw new \Exception('unsupported: type ' .$type);
+	case 'commit':
+	case 'tree':
+	case 'blob':
+	case 'tag':
+		$decoded_content = zlib_decode(substr($content, $offset));
+		break;
+	default:
+		throw new \Exception(sprintf('unsupported type "%s"')); }
+	return [ $type, $decoded_content ];
 }
