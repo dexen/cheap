@@ -16,6 +16,46 @@ $show_usage = function()
 };
 
 switch ($argv[1]??null) {
+case 'log':
+	$ref = $argv[2] ?? 'HEAD';
+	if ($ref === 'HEAD') {
+		$v = file_get_contents('.git/HEAD');
+		$matches = [];
+		if (preg_match('#^ref: (refs/heads/([^\\s]+))\\s*#', $v, $matches)) {
+			$ref = $matches[1];
+				# FIXME: prevent dir traversal outside
+			$hash = rtrim(file_get_contents('.git/' .$ref)); }
+		else {
+throw new \Exception('FIXME unsupported'); } }
+	else {
+		$a = repo_object_name_resolution_short_hash($ref);
+		switch (count($a)) {
+		case 1:
+			$hash = $a[0];
+			break;
+		case 0:
+			printf("Revision %s not found in repository\n", $short_hash);
+			return 1;
+		default:
+			printf("Ambiguous revision %s\n", $short_hash);
+			return 1; } }
+	do {
+		$rcd = repo_object_content_by_hash($hash);
+		if ($rcd[0] !== 'commit')
+			throw new \Exception(sprintf('expected "commit" object, got "%s"', $rcd[0]));
+		printf("commit %s\n", $hash);
+		printf("Author: %s\n", object_commit_author($rcd[1]));
+		printf("Date: %s\n", -1);
+		printf("\n");
+		printf("	%s\n", object_commit_message_abbreviated($rcd[1]));
+		$a = object_commit_parents($rcd[1]);
+		if ($a) {
+			printf("\n");
+			$hash = $a[0]; }
+		else
+			$hash = null;
+	} while ($hash);
+	exit(0);
 case 'rev-parse':
 	if (!array_key_exists(2, $argv))
 		exit(0);
