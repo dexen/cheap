@@ -36,7 +36,8 @@ function object_commit_author(string $commit) : ?string
 		throw new \Exception('malformed commit: no author name');
 		return null;
 	case 1:
-		return array_shift($a);
+		$line = array_shift($a);
+		return explode('> ', $line)[0] .'>';
 	default:
 		throw new \Exception('malformed commit: multiple author names'); }
 }
@@ -59,7 +60,11 @@ function object_commit_author_date(string $commit) : ?string
 		throw new \Exception('malformed commit: no author name');
 		return null;
 	case 1:
-		return array_shift($a);
+		$line = array_shift($a);
+		$ts_tz = explode('> ', $line)[1];
+		[$ts, $tz] = explode(' ', $ts_tz);
+		$DT = \DateTimeImmutable::createFromFormat('U', $ts, new \DateTimeZone($tz));
+		return $DT->format('D M j H:i:s Y O');
 	default:
 		throw new \Exception('malformed commit: multiple author names'); }
 }

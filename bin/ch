@@ -45,7 +45,7 @@ throw new \Exception('FIXME unsupported'); } }
 			throw new \Exception(sprintf('expected "commit" object, got "%s"', $rcd[0]));
 		printf("commit %s\n", $hash);
 		printf("Author: %s\n", object_commit_author($rcd[1]));
-		printf("Date: %s\n", -1);
+		printf("Date:   %s\n", object_commit_author_date($rcd[1]));
 		printf("\n");
 		printf("	%s\n", object_commit_message_abbreviated($rcd[1]));
 		$a = object_commit_parents($rcd[1]);
